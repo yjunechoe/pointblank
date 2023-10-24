@@ -146,3 +146,54 @@ test_that("'NULL = select everything' behavior in rows_*() validation functions"
   expect_equal(nrow(df_interrogated$validation_set), 2L)
   
 })
+
+test_that("`info_columns()` get `where()` support for simple `is.*()`-style class predicates", {
+  
+  # Reprex from examples selecting `date` and `date_time` columns
+  informant <- 
+    create_informant(
+      tbl = ~ small_table,
+      tbl_name = "small_table",
+      label = "An example."
+    )
+  # tidyselect by column name pattern
+  informant_1 <- informant %>% 
+    info_columns(
+      columns = starts_with("date"),
+      info = "Time-based values (e.g., `Sys.time()`)."
+    )
+  
+  # NEW: tidyselect with class predicates using `where()`
+  ## `is_timepoint()` is a copy of `lubridate::is.timepoint()`
+  is_timepoint <- function(x) {
+    inherits(x, c("POSIXt", "POSIXct", "POSIXlt", "Date"))
+  }
+  informant_2 <- informant %>% 
+    info_columns(
+      columns = where(is_timepoint),
+      info = "Time-based values (e.g., `Sys.time()`)."
+    )
+  expect_identical(informant_1, informant_2)
+  
+  # NEW: complex tidyselect expressions
+  informant_3 <- informant %>% 
+    info_columns(
+      columns = where(is.character) & matches("[abc]"),
+      info = "Time-based values (e.g., `Sys.time()`)."
+    )
+  # Columns `b` and `f` are marked as character in the columns metadata
+  expect_equal(
+    names(which(sapply(informant_3$metadata$columns, `[[`, "_type") == "character")),
+    c("b", "f")
+  )
+  # Complex expression `where(is.character) & matches("[abc]")` adds info to `b` but not `f`
+  expect_equal(
+    sapply(informant_3$metadata$columns[c("b", "f")], `[[`, "info"),
+    list(b = "Time-based values (e.g., `Sys.time()`).", f = NULL)
+  )
+  
+  ## NOTE: `where()` predicates only work for function checking type/class
+  ## - Ex: something like `where(\(x) max(x) > 100)` doesn't work because
+  ##       `info_columns()` doesn't have access to the full data
+  
+})
