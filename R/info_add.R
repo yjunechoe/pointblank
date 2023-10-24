@@ -449,8 +449,23 @@ info_columns <- function(
   metadata_list <- metadata$metadata
   metadata_columns <- metadata_list$columns
   
-  x <- dplyr::as_tibble(metadata_columns %>% lapply(function(x) 1))
-  
+  vec_ptypes <- c("raw", "logical", "integer", "double",
+                  "numeric", "complex", "character", "list")
+  vec_exemplar <- function(class_str) {
+    class_vec <- strsplit(class_str, ", ")[[1]]
+    exemplar <- 1
+    if (length(class_vec) == 1 && any(class_vec == vec_ptypes)) {
+      storage.mode(exemplar) <- class_vec
+    } else {
+      exemplar <- structure(exemplar, class = class_vec)
+    }
+    exemplar
+  }
+  metadata_column_exeplars <- lapply(metadata_columns, function(x) {
+    vec_exemplar(x[["_type"]])
+  })
+  x <- dplyr::as_tibble(metadata_column_exeplars)
+    
   # Resolve the columns based on the expression
   columns <- resolve_columns(x = x, var_expr = columns, preconditions = NULL)
   
