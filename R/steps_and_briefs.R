@@ -50,11 +50,11 @@ create_validation_step <- function(
         column = ifelse(is.null(column), list(NULL), list(column)),
         values = ifelse(
           is.null(values) || is_a_table_object(values),
-          list(NULL), list(deparse1(values))
+          list(NULL), list(values)
         ),
         na_pass = ifelse(is.null(na_pass), NA, as.logical(na_pass)),
         preconditions = ifelse(
-          is.null(preconditions), list(NULL), list(deparse1(preconditions))
+          is.null(preconditions), list(NULL), list(preconditions)
         ),
         seg_col = ifelse(
           is.null(seg_col), NA_character_, as.character(seg_col)
