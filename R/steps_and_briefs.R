@@ -62,7 +62,8 @@ create_validation_step <- function(
         seg_val = ifelse(
           is.null(seg_val), NA_character_, as.character(seg_val)
         )
-      )
+      ),
+      environment = FALSE
     )
   
   # Create a validation step as a single-row `tbl_df` object
